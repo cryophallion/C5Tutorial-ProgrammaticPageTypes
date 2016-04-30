@@ -44,7 +44,7 @@ class Controller extends Package
         //Parent Page Example:
         
         //Create "News" page for installing the Page Type under. Just set to a full page 
-        $newsPage = $this->addPage('ppt_news', 'PPT News', 'Programmatic Page Types News', 'page', 'full', 'home', $pkg);
+        $newsPage = $this->addPage('ppt-news', 'PPT News', 'Programmatic Page Types News', 'page', 'full', 1, $pkg);
         
         //Create News Items Page Type that can be only under News Page
         $newsItemPageType = $this->addPageTypeWithParentPagePublishTarget('ppt_news_item', 'PPT News Item', 'left_sidebar', 'C', array('left_sidebar'), $newsPage->getCollectionID(), $pkg);
@@ -60,21 +60,25 @@ class Controller extends Package
     
     /**
      * Add a Specific Page
-     * @param string $handle Page Handle
+     * @param string|int $pathOrCID Page Path OR CID
      * @param string $name Page Name
      * @param string $description Page Description
      * @param string $type Page Type Handle
      * @param string $template Page Template Handle
      * @param string|int|object $parent Parent Page (can be handle, ID, or object)
      * @param object $pkg Package Object
+     * @param string $handle Optional slugified handle
      * @return object Page Object
      */
-    protected function addPage($handle, $name, $description, $type, $template, $parent, $pkg)
+    protected function addPage($pathOrCID, $name, $description, $type, $template, $parent, $pkg, $handle=null)
     {
         //Get Page if it's already created
-        $page = Page::getByHandle($handle);
-        if (!is_object($page)) {
-            
+        if (is_int($pathOrCID)) {
+            $page = Page::getByID($pathOrCID);
+        } else {
+            $page = Page::getByPath($pathOrCID);
+        }
+        if ($page->isError() && $page->getError() == COLLECTION_NOT_FOUND) {
             //Get Page Type and Templates from their handles
             $pageType = PageType::getByHandle($type);
             $pageTemplate = PageTemplate::getByHandle($template);
@@ -95,7 +99,8 @@ class Controller extends Package
                 'cName' => $name,
                 'cHandle' => $handle,
                 'cDescription' => $description,
-                'pkgID' => $pkgID
+                'pkgID' => $pkgID,
+                'cHandle' => $handle
             ), $pageTemplate);
         }
         
